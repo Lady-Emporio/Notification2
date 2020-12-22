@@ -1,0 +1,73 @@
+﻿{% extends "base.html" %}
+
+
+{% block content %}
+
+	{% if form %}
+	<form method="post">
+		{{ form.as_p }}
+		<input type="submit" value="Submit">
+	</form>
+	{% endif %}
+
+
+    {% if message %}
+	'{{message|safe}}'
+	{% endif %}
+
+    {% if text %}
+	{{text|safe}}
+	{% endif %}
+
+    {% if formset %}
+		{% for form in formset %}
+		<h6>Form</h6>
+		 {{form.as_table}}
+		{% endfor %}
+	{% endif %}
+
+
+
+	{% if content %}
+
+	{% for notificaton in content %}
+	{{filter}}
+	<div class="group">
+		<div class="headerGroup">{{notificaton.nName}} - {{notificaton.nId}}. {{quest.nBegin|date:'Y-m-d H:i'}}. {{quest.nIsActive}}  </div>
+				<table class="mainTable">
+					{% for act in notificaton.acts %}
+					<tr class="rowQuest" style="background-color: rgb({{act.Background_red}},{{act.Background_green}},{{act.Background_blue}});color:rgb({{act.Red}},{{act.Green}},{{act.Blue}});">
+						<td>{{act.aId}} </td>
+						<td>{{act.aName}} </td>
+						<td>{{act.aIsActive}}  </td>
+						<td>{{act.sName}}  </td>
+					</tr>
+					<tr>
+
+					<td></td>
+					<td></td>
+					<td colspan="2">
+
+					<table>
+						{% for history in act.history %}
+							<tr><td>{{history.period|date:'Y-m-d H:i'}}</td><td  style="background-color: rgb({{act.Background_red}},{{act.Background_green}},{{act.Background_blue}});color:rgb({{act.Red}},{{act.Green}},{{act.Blue}});">{{history.state}}</td></tr>
+						{% endfor %}
+					</table>
+					</td>
+
+					</tr>
+
+					{% endfor %}
+				</table>
+
+	</div>
+	{% endfor %}
+
+
+	{% endif %}
+{% endblock %}
+
+
+
+
+

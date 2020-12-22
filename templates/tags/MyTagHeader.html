@@ -1,0 +1,26 @@
+﻿
+
+<nav class="header_nav">
+		<h3>Base {% now "Y-m-d H:i:s" %}</h3>
+  <ul class="header_ul">
+    <li><a class="header_a" href="{% url 'admin:index' %}">admin</a></li>
+    <li><a class="header_a" href="{% url 'index' %}">main page</a></li>
+	
+	<li><span  class="header_a" >Notification ▼</span>
+		<ul class="submenu">
+			<li><a class="header_a" href="{% url 'Notification:NotificationPaginationList' %}">Список задач</a></li>		
+			<li><a class="header_a" href="{% url 'Notification:NotificationFullFormCreate' %}">Новый</a></li>		
+	
+		</ul>
+	</li>
+
+
+	<li><span class="header_a">Api ▼</span>
+		<ul class="submenu">
+			
+		</ul>
+    </li>
+
+	<li><a href="{% url 'Notification:AllNotification' %}" class="header_a" >Все задачи</a></li>
+  </ul>
+</nav>

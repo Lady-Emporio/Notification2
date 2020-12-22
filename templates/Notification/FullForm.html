@@ -1,0 +1,248 @@
+﻿
+{% extends "base.html" %}
+
+{% block style %}
+<style>
+    .div_not {
+        border:2px solid black;
+        margin:5px;
+    }
+    .div_act {
+        box-shadow: 0px 0px 5px 5px green;
+        margin-left: 30px;
+    }
+    .actComments{
+        box-shadow: 0px 0px 10px 10px green inset;
+        margin-left: 80px;
+    }
+    .CommandPanel{
+        position: fixed;
+        top: 40px;
+        left: 20px;
+        right: 0px;
+        background: linear-gradient(to right, rgba(124,236,133,0.2), #f1da36);
+        padding: 10px;
+    }
+
+    .NotImage {
+        border: 2px solid black;
+        max-height: 500px;
+        max-width: 500px;
+    }
+    .AloneImage{
+        border: 5px solid #44a52b;
+        margin: 4px;
+        padding:2px;
+    }
+    .ShowImage {
+        position:absolute;
+        top:30px;
+        left:30px;
+        max-width:1920px;
+        max-height:1080px;
+        box-shadow: 0 0 30px 30px darkgreen;
+        border: 5px solid black;
+    }
+</style>
+{% endblock %}
+
+
+
+
+
+{% block content %}
+
+{{message}}
+
+<form method="post">
+    <div class="div_not">
+{{form.as_p}}
+        <div><button type="button" onclick="addAct({{pk}},this)">Add</button></div>
+    </div>
+    {% csrf_token %}
+
+    <div class="div_acts" id="div_acts">
+        {% for act_data in acts %}
+            <div class="div_act"> 
+            {{act_data.actform.as_p}}
+                <div><button type="button" onclick="addComment({{act_data.pk}},this)">Add</button></div>
+            </div>
+            <div class="actComments" id="actComments{{act_data.pk}}">
+                {% for comments in act_data.listComments %}
+                    {{comments.as_div}}
+                {% endfor %}
+            </div>
+            <div style="width:100%;height:10px;background:orange;"></div>
+        {% endfor %}
+    </div>
+
+    <div class="CommandPanel">
+        <input type="submit" value="Сохранить"/>
+    </div>
+</form>
+
+<script>
+
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i];
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function addComment(pk,elem) {
+        ajax_saveCommentApi(pk,elem);
+    }
+    function addAct(pk,elem) {
+        let data={
+		    "pk":pk,
+	    };
+        url="{% url 'Notification:api_AddAct' %}";
+        sendData(url,data,goodAct,BadAct);
+    }
+    function goodAct(response){
+        d=document.getElementById("div_acts");
+        d.innerHTML+=response;
+    }
+    function BadAct(response,status){
+        console.log("error",response,status);
+    }
+
+    function sendData(url,data,callbackGood,callbackBad){
+        const request = new XMLHttpRequest();
+        request.open("POST", url, true);
+        request.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
+        request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        request.addEventListener("readystatechange", () => {
+		    if(request.readyState === 4 && request.status === 200) {  
+                if(callbackGood!=undefined){
+                    callbackGood(request.responseText);
+                }
+                
+		    }else{
+                if(callbackBad!=undefined){
+                    callbackBad(request.responseText,request.readyState);
+                }
+                
+		    }
+	    });
+
+	    let json = JSON.stringify(data);
+	    console.log("send");
+	    request.send(json);
+    }
+
+    function ajax_saveCommentApi(pk,elem){
+	    const request = new XMLHttpRequest();
+	    const url =  "{% url 'Notification:apiAddComment' %}";
+	    request.open("POST", url, true);
+        
+        request.setRequestHeader("X-CSRFToken", getCookie("csrftoken"));
+	    request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+	    request.addEventListener("readystatechange", () => {
+		    if(request.readyState === 4 && request.status === 200) {       
+			    console.log(request.responseText);
+			    
+		    }else{
+			    elem.style.background="rgba(255,0,0, 0.5)";
+			    console.log(request.readyState);
+			    console.log(request.responseText);
+                d=document.getElementById("actComments"+pk);
+                d.innerHTML+=request.responseText;
+		    }
+	    });
+	    let data={
+		    "pk":pk,
+	    };
+	    let json = JSON.stringify(data);
+	    console.log("send");
+	    request.send(json);
+    };
+</script>
+{% endblock %}
+
+
+
+
+
+
+{% block RightPage %}
+<h3>Images </h3>
+
+<div>
+    <image src="_" alt="Пока новое изображение из буфера не вставили." id="NewCopyImage"></image>
+    <button type="button" onclick="SaveNewImage()">Сохранить</button>
+</div>
+
+<div class="listImages">
+ {% for idata in images %}
+<div class="AloneImage">
+    {{idata.pk}}
+    <image class="NotImage" src="{{ idata.image_base64|default_if_none:"" }}" onclick="showImage(this)" >
+</div> 
+{% endfor %}
+</div> 
+    
+
+
+<script>
+    const global_pk={{pk}};
+
+    document.onpaste = function(event){
+        var items = (event.clipboardData || event.originalEvent.clipboardData).items;
+        console.log(JSON.stringify(items)); // will give you the mime types
+        for (index in items) {
+        var item = items[index];
+        if (item.kind === 'file') {
+        var blob = item.getAsFile();
+        var reader = new FileReader();
+        reader.onload = function(event){
+        console.log(event.target.result);
+            document.getElementById("NewCopyImage").src = event.target.result;
+        }; // data url!
+
+        reader.readAsDataURL(blob);
+        }
+        }
+    }
+
+    function SaveNewImage() {
+        image_base64 = document.getElementById("NewCopyImage").src;
+        pk=global_pk;
+        let data={
+		    "image_base64":image_base64,
+		    "pk":pk,
+	    };
+        sendData("{% url 'Notification:api_AddImage' %}",data,JsLocationReload,JsLocationReload);
+    }
+
+    function showImage(elem){
+        if(elem.classList.contains("ShowImage")){
+            elem.classList.add("NotImage");
+            elem.classList.remove("ShowImage");
+        }else{
+            elem.classList.add("ShowImage");
+            elem.classList.remove("NotImage");
+        }
+    }
+
+    function JsLocationReload(){
+        location.reload();
+    }
+</script>
+
+{% endblock %}
+
+
+
+
+
